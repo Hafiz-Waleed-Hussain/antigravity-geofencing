@@ -10,6 +10,12 @@ class MachineReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context?, intent: Intent?) {
+        android.widget.Toast.makeText(
+                        context,
+                        "Machine Broadcast!",
+                        android.widget.Toast.LENGTH_SHORT
+                )
+                .show()
         // AI Note: In production, consider EventBus or GlobalScope flow emission
         eventBus?.invoke()
     }

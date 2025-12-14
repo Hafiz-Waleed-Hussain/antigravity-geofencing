@@ -51,30 +51,53 @@ class MviViewModel : ViewModel() {
                 // For MVI cleanliness, we should ideally Wrap it.
                 // We'll simulate the "Side Effect" here or assume we have a way.
                 // In a real app we'd map to a SideEffect/Action
-                Observable.just(MviResult.Processing)
+                Observable.just<MviResult>(MviResult.Processing)
                         .concatWith(
                                 // Fake async work or real logic
-                                Observable.just(
+                                Observable.just<MviResult>(
                                                 MviResult.SetGeofenceSuccess(
                                                         "Geofence Set: ${intent.lat}, ${intent.lng}"
                                                 )
                                         )
+                                        .flatMap { result ->
+                                            // Side effect: Save to DB
+                                            val entity =
+                                                    com.antigravity.geofencing.data.GeofenceEntity(
+                                                            requestId = intent.requestId,
+                                                            latitude = intent.lat,
+                                                            longitude = intent.lng,
+                                                            radius = intent.radius
+                                                    )
+
+                                            // Use Observable.fromCallable/create to do DB op on IO
+                                            Observable.fromCallable {
+                                                        kotlinx.coroutines.runBlocking {
+                                                            com.antigravity.geofencing.data
+                                                                    .GeofenceRepository.getDao()
+                                                                    .insert(entity)
+                                                        }
+                                                        result // Pass original result downstream
+                                                    }
+                                                    .subscribeOn(Schedulers.io())
+                                        }
                                         .delay(500, TimeUnit.MILLISECONDS)
                         )
             }
             is MviIntent.SilenceAlarm -> Observable.just(MviResult.AlarmSilenced)
             is MviIntent.SnoozeAlarm -> {
-                Observable.just(MviResult.AlarmSnoozed)
+                Observable.just<MviResult>(MviResult.AlarmSnoozed)
                         .concatWith(
                                 Observable.timer(
-                                                10,
-                                                TimeUnit.SECONDS
-                                        ) // shortening to 10s for demo, user asked 10 min
+                                                1, // 1 minute for demo? logic says 10s in comment
+                                                TimeUnit.MINUTES
+                                        )
                                         .map { MviResult.AlarmTriggered }
                                         .cast(MviResult::class.java)
                         )
             }
             is MviIntent.GeofenceEntered -> Observable.just(MviResult.AlarmTriggered)
+            is MviIntent.ViewHistory -> Observable.just(MviResult.NavigateToHistory(true))
+            is MviIntent.HistoryNavigated -> Observable.just(MviResult.NavigateToHistory(false))
         }
     }
 
@@ -90,6 +113,8 @@ class MviViewModel : ViewModel() {
                     previousState.copy(isAlarmPlaying = false, status = "Silenced.")
             is MviResult.AlarmSnoozed ->
                     previousState.copy(isAlarmPlaying = false, status = "Snoozed...")
+            is MviResult.NavigateToHistory ->
+                    previousState.copy(navigateToHistory = result.navigate)
         }
     }
 

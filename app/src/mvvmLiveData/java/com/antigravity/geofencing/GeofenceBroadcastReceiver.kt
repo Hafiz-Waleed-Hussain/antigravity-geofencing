@@ -15,6 +15,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
+        Toast.makeText(context, "Broadcast Received!", Toast.LENGTH_SHORT).show()
         val geofencingEvent = GeofencingEvent.fromIntent(intent)
         if (geofencingEvent != null && geofencingEvent.hasError()) {
             Toast.makeText(context, "Geofencing Error", Toast.LENGTH_SHORT).show()

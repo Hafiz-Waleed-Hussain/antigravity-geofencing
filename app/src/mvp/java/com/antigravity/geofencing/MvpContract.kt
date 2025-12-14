@@ -9,6 +9,8 @@ interface MvpContract {
         fun getLongitude(): String
         fun getRadius(): String
         fun showInputError()
+        fun navigateToHistory()
+        fun addGeofence(requestId: String, lat: Double, lng: Double, radius: Float)
     }
 
     interface Presenter {
@@ -17,5 +19,6 @@ interface MvpContract {
         fun onSetGeofenceClicked()
         fun onSilenceClicked()
         fun onSnoozeClicked()
+        fun onHistoryClicked()
     }
 }

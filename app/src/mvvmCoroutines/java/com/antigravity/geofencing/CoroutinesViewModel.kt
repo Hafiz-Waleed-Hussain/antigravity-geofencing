@@ -15,10 +15,31 @@ class CoroutinesViewModel : ViewModel() {
     private val _isAlarmPlaying = MutableLiveData<Boolean>(false)
     val isAlarmPlaying: LiveData<Boolean> = _isAlarmPlaying
 
-    fun setGeofence(lat: Double, lng: Double, radius: Float) {
+    private val _navigateToHistory = MutableLiveData<Boolean>(false)
+    val navigateToHistory: LiveData<Boolean> = _navigateToHistory
+
+    fun onHistoryClicked() {
+        _navigateToHistory.value = true
+    }
+
+    fun onHistoryNavigated() {
+        _navigateToHistory.value = false
+    }
+
+    fun setGeofence(requestId: String, lat: Double, lng: Double, radius: Float) {
         viewModelScope.launch {
             _status.value = "Setting Geofence (Async)..."
             delay(500) // Simulate generic async work
+
+            val entity =
+                    com.antigravity.geofencing.data.GeofenceEntity(
+                            requestId = requestId,
+                            latitude = lat,
+                            longitude = lng,
+                            radius = radius
+                    )
+            com.antigravity.geofencing.data.GeofenceRepository.getDao().insert(entity)
+
             _status.value = "Geofence Active!"
         }
     }
@@ -42,5 +63,9 @@ class CoroutinesViewModel : ViewModel() {
             _isAlarmPlaying.value = true
             _status.value = "Snooze Over!"
         }
+    }
+
+    fun onPermissionRequired() {
+        _status.value = "Waiting for Permissions..."
     }
 }

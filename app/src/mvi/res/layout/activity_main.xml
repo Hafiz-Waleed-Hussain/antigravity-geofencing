@@ -14,19 +14,44 @@
         android:textStyle="bold"
         android:layout_marginBottom="24dp"/>
 
-    <EditText
-        android:id="@+id/et_latitude"
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/tv_selected_location"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:hint="@string/latitude"
-        android:inputType="numberDecimal|numberSigned"/>
+        android:text="Tap Map to Select Location"
+        android:layout_marginBottom="8dp"/>
 
-    <EditText
-        android:id="@+id/et_longitude"
+    <fragment
+        android:id="@+id/map_fragment"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="250dp"/>
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/longitude"
-        android:inputType="numberDecimal|numberSigned"/>
+        android:orientation="horizontal"
+        android:weightSum="2"
+        android:layout_marginTop="8dp">
+
+        <EditText
+            android:id="@+id/et_latitude"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Latitude"
+            android:inputType="numberDecimal|numberSigned"
+            android:text="37.4220" />
+
+        <EditText
+            android:id="@+id/et_longitude"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Longitude"
+            android:inputType="numberDecimal|numberSigned"
+            android:text="-122.0841" />
+    </LinearLayout>
 
     <EditText
         android:id="@+id/et_radius"
@@ -34,7 +59,7 @@
         android:layout_height="wrap_content"
         android:hint="@string/radius"
         android:inputType="numberDecimal"
-        android:text="100"/>
+        android:text="100.0" />
 
     <Button
         android:id="@+id/btn_set_geofence"
@@ -79,4 +104,10 @@
             android:text="@string/snooze"/>
     </LinearLayout>
 
+    <Button
+        android:id="@+id/btn_history"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="View History"
+        android:layout_marginTop="24dp"/>
 </LinearLayout>

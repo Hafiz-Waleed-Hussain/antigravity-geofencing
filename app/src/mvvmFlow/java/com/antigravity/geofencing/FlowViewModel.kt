@@ -8,14 +8,36 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class FlowState(val status: String = "Idle", val isAlarmVisible: Boolean = false)
+data class FlowState(
+        val status: String = "Idle",
+        val isAlarmVisible: Boolean = false,
+        val navigateToHistory: Boolean = false
+)
 
 class FlowViewModel : ViewModel() {
     private val _state = MutableStateFlow(FlowState())
     val state: StateFlow<FlowState> = _state.asStateFlow()
 
-    fun setGeofence(lat: Double, lng: Double, radius: Float) {
-        _state.value = _state.value.copy(status = "Geofence Active (Flow) for $lat, $lng")
+    fun setGeofence(requestId: String, lat: Double, lng: Double, radius: Float) {
+        viewModelScope.launch {
+            val entity =
+                    com.antigravity.geofencing.data.GeofenceEntity(
+                            requestId = requestId,
+                            latitude = lat,
+                            longitude = lng,
+                            radius = radius
+                    )
+            com.antigravity.geofencing.data.GeofenceRepository.getDao().insert(entity)
+            _state.value = _state.value.copy(status = "Geofence Active (Flow) for $lat, $lng")
+        }
+    }
+
+    fun onHistoryClicked() {
+        _state.value = _state.value.copy(navigateToHistory = true)
+    }
+
+    fun onHistoryNavigated() {
+        _state.value = _state.value.copy(navigateToHistory = false)
     }
 
     fun onGeofenceEntered() {

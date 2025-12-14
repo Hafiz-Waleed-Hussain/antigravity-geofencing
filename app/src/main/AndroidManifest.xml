@@ -12,12 +12,19 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
+        android:name=".GeofenceApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="AntigravityGeofence"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@drawable/ic_launcher"
+        android:label="${appName}"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
+        android:theme="@style/Theme.AntigravityGeofencing"
+        tools:targetApi="31">
+        
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
         
         <activity
             android:name=".MainActivity"
@@ -28,6 +35,11 @@
             </intent-filter>
         </activity>
         
+        <activity
+            android:name=".GeofenceHistoryActivity"
+            android:exported="false"
+            android:label="History" />
+
     </application>
 
 </manifest>

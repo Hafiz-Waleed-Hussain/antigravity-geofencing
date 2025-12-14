@@ -53,21 +53,50 @@ class MainActivity : ComponentActivity() {
 
     // Simplification: In a real app we'd keep logic out of Activity, but the GeofenceClient
     // requires Context/Activity integration
+    private val requestPermissionLauncher =
+            registerForActivityResult(
+                    androidx.activity.result.contract.ActivityResultContracts
+                            .RequestMultiplePermissions()
+            ) {}
+
+    private val requestBackgroundLauncher =
+            registerForActivityResult(
+                    androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+            ) {}
+
     private fun addGeofence(lat: Double, lng: Double, radius: Float) {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
-                        PackageManager.PERMISSION_GRANTED
+                        PackageManager.PERMISSION_GRANTED ||
+                        (android.os.Build.VERSION.SDK_INT >= 33 &&
+                                ActivityCompat.checkSelfPermission(
+                                        this,
+                                        Manifest.permission.POST_NOTIFICATIONS
+                                ) != PackageManager.PERMISSION_GRANTED)
         ) {
-            ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                    1004
-            )
+            val permissions = mutableListOf(Manifest.permission.ACCESS_FINE_LOCATION)
+            if (android.os.Build.VERSION.SDK_INT >= 33) {
+                permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            requestPermissionLauncher.launch(permissions.toTypedArray())
             return
         }
 
+        if (android.os.Build.VERSION.SDK_INT >= 29 &&
+                        ActivityCompat.checkSelfPermission(
+                                this,
+                                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                        ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestBackgroundLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            return
+        }
+
+        // Generate Unique ID
+        val requestId = java.util.UUID.randomUUID().toString()
+
         val geofence =
                 Geofence.Builder()
-                        .setRequestId("GEOFENCE_ID_FLOW")
+                        .setRequestId(requestId)
                         .setCircularRegion(lat, lng, radius)
                         .setExpirationDuration(Geofence.NEVER_EXPIRE)
                         .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
@@ -80,7 +109,7 @@ class MainActivity : ComponentActivity() {
                         .build()
 
         geofencingClient.addGeofences(request, geofencePendingIntent).addOnSuccessListener {
-            viewModel.setGeofence(lat, lng, radius)
+            viewModel.setGeofence(requestId, lat, lng, radius)
         }
     }
 }
@@ -88,45 +117,111 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen(viewModel: FlowViewModel, onSetGeofence: (Double, Double, Float) -> Unit) {
     val state by viewModel.state.collectAsState()
-    var lat by remember { mutableStateOf("") }
-    var lng by remember { mutableStateOf("") }
-    var rad by remember { mutableStateOf("100") }
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    LaunchedEffect(state.isAlarmVisible) {
+        if (state.isAlarmVisible) {
+            AlarmUtils.startAlarm(context)
+            AlarmUtils.sendNotification(context, "Geofence Entered", "You have entered the zone!")
+        } else {
+            AlarmUtils.stopAlarm()
+        }
+    }
+
+    // State for Text Inputs
+    var latText by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("37.4220") }
+    var lngText by
+            androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("-122.0841") }
+    var rad by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("100.0") }
+
+    // Map State
+    var selectedLocation by remember {
+        mutableStateOf<com.google.android.gms.maps.model.LatLng?>(null)
+    }
+
+    val defaultLocation = com.google.android.gms.maps.model.LatLng(37.4220, -122.0841) // Googleplex
+    val cameraPositionState =
+            com.google.maps.android.compose.rememberCameraPositionState {
+                position =
+                        com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(
+                                defaultLocation,
+                                15f
+                        )
+            }
+
+    // Sync Map Click to Text
+    LaunchedEffect(selectedLocation) {
+        selectedLocation?.let {
+            latText = it.latitude.toString()
+            lngText = it.longitude.toString()
+        }
+    }
 
     Column(
             modifier = Modifier.padding(16.dp).fillMaxSize(),
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
     ) {
-        Text("MVVM Flow + Compose", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(24.dp))
+        Text("MVVM Flow + Google Maps", style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(
-                value = lat,
-                onValueChange = { lat = it },
-                label = { Text("Latitude") },
-                modifier = Modifier.fillMaxWidth()
-        )
-        OutlinedTextField(
-                value = lng,
-                onValueChange = { lng = it },
-                label = { Text("Longitude") },
-                modifier = Modifier.fillMaxWidth()
-        )
+        Box(
+                modifier =
+                        Modifier.fillMaxWidth()
+                                .weight(1f) // Fill available space
+                                .padding(bottom = 16.dp)
+        ) {
+            com.google.maps.android.compose.GoogleMap(
+                    modifier = Modifier.fillMaxSize(),
+                    cameraPositionState = cameraPositionState,
+                    onMapClick = { latLng -> selectedLocation = latLng }
+            ) {
+                selectedLocation?.let {
+                    com.google.maps.android.compose.Marker(
+                            state = com.google.maps.android.compose.MarkerState(position = it),
+                            title = "Selected Location"
+                    )
+                }
+            }
+        }
+
+        // Manual Input Fields
+        Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                    value = latText,
+                    onValueChange = { latText = it },
+                    label = { Text("Latitude") },
+                    modifier = Modifier.weight(1f)
+            )
+            OutlinedTextField(
+                    value = lngText,
+                    onValueChange = { lngText = it },
+                    label = { Text("Longitude") },
+                    modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         OutlinedTextField(
                 value = rad,
                 onValueChange = { rad = it },
-                label = { Text("Radius") },
+                label = { Text("Radius (meters)") },
                 modifier = Modifier.fillMaxWidth()
         )
 
         Button(
                 onClick = {
-                    val dLat = lat.toDoubleOrNull()
-                    val dLng = lng.toDoubleOrNull()
+                    val lat = latText.toDoubleOrNull()
+                    val lng = lngText.toDoubleOrNull()
                     val fRad = rad.toFloatOrNull()
-                    if (dLat != null && dLng != null && fRad != null) {
-                        onSetGeofence(dLat, dLng, fRad)
+                    if (lat != null && lng != null && fRad != null) {
+                        onSetGeofence(lat, lng, fRad)
                     }
                 },
+                enabled = latText.isNotEmpty() && lngText.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
         ) { Text("Set Geofence") }
 
@@ -145,6 +240,18 @@ fun MainScreen(viewModel: FlowViewModel, onSetGeofence: (Double, Double, Float) 
             }
             Button(onClick = { viewModel.snooze() }, modifier = Modifier.fillMaxWidth()) {
                 Text("Snooze")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = { viewModel.onHistoryClicked() }, modifier = Modifier.fillMaxWidth()) {
+            Text("View History")
+        }
+
+        if (state.navigateToHistory) {
+            LaunchedEffect(Unit) {
+                context.startActivity(Intent(context, GeofenceHistoryActivity::class.java))
+                viewModel.onHistoryNavigated()
             }
         }
     }

@@ -2,9 +2,15 @@ package com.antigravity.geofencing
 
 import android.os.Handler
 import android.os.Looper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class MvpPresenter : MvpContract.Presenter {
 
+    private val presenterScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var view: MvpContract.View? = null
     // Legacy Handler for delay (2010 style)
     private val handler = Handler(Looper.getMainLooper())
@@ -19,6 +25,11 @@ class MvpPresenter : MvpContract.Presenter {
         if (snoozeRunnable != null) {
             handler.removeCallbacks(snoozeRunnable!!)
         }
+        presenterScope.cancel()
+    }
+
+    override fun onHistoryClicked() {
+        view?.navigateToHistory()
     }
 
     override fun onSetGeofenceClicked() {
@@ -32,18 +43,35 @@ class MvpPresenter : MvpContract.Presenter {
         }
 
         try {
-            // Validation logic
             val lat = latStr.toDouble()
             val lng = lngStr.toDouble()
             val rad = radStr.toFloat()
-            // In a real app we'd pass these back to view to register
-            // For MVP, we tell the view "Go ahead and register"
-            view?.showStatus("Geofencing set for $lat, $lng ($rad m)")
-            // We assume successful registration for now; the View handles the system call
+            val requestId = java.util.UUID.randomUUID().toString()
+
+            view?.addGeofence(requestId, lat, lng, rad)
+            view?.showStatus("Geofence Set: $lat, $lng ($rad m)")
+
+            // Save to DB (Coroutine Style)
+            presenterScope.launch(Dispatchers.IO) {
+                try {
+                    val entity =
+                            com.antigravity.geofencing.data.GeofenceEntity(
+                                    requestId = requestId,
+                                    latitude = lat,
+                                    longitude = lng,
+                                    radius = rad
+                            )
+                    com.antigravity.geofencing.data.GeofenceRepository.getDao().insert(entity)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
         } catch (e: NumberFormatException) {
             view?.showInputError()
         }
     }
+
+    // ... rest of logic
 
     override fun onSilenceClicked() {
         view?.hideAlarm()

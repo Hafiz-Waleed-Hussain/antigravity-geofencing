@@ -13,6 +13,7 @@ data class GeoCoordinate(val latitude: Double, val longitude: Double)
 data class GeofenceConfig(
         val center: GeoCoordinate,
         val radiusMeters: Float,
+        val requestId: String = "MACHINE_ID",
         val expireInMs: Long = -1
 )
 
@@ -39,6 +40,7 @@ interface AlarmSystem {
 data class MachineState(
         val statusMessage: String = "System Idle",
         val alarmActive: Boolean = false,
+        val navigateToHistory: Boolean = false,
         val logs: List<String> = emptyList()
 )
 
@@ -49,4 +51,6 @@ interface MachineController {
     fun onGeofenceTriggered()
     fun onSilenceRequested()
     fun onSnoozeRequested()
+    fun onHistoryRequested()
+    fun onHistoryNavigated()
 }

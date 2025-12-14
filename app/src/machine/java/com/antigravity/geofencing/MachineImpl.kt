@@ -39,7 +39,7 @@ class AndroidGeofenceSystem(private val context: Context) : GeofenceSystem {
         return try {
             val geofence =
                     Geofence.Builder()
-                            .setRequestId("MACHINE_ID")
+                            .setRequestId(config.requestId)
                             .setCircularRegion(
                                     config.center.latitude,
                                     config.center.longitude,
@@ -81,6 +81,14 @@ class MachineControllerImpl(private val geofenceSystem: GeofenceSystem) :
     private val _state = MutableStateFlow(MachineState())
     override val state: StateFlow<MachineState> = _state.asStateFlow()
 
+    override fun onHistoryRequested() {
+        _state.value = _state.value.copy(navigateToHistory = true)
+    }
+
+    override fun onHistoryNavigated() {
+        _state.value = _state.value.copy(navigateToHistory = false)
+    }
+
     override fun processInput(lat: String, lng: String, rad: String) {
         viewModelScope.launch {
             val dLat = lat.toDoubleOrNull()
@@ -94,10 +102,23 @@ class MachineControllerImpl(private val geofenceSystem: GeofenceSystem) :
 
             _state.value = _state.value.copy(statusMessage = "Registering Geofence...")
 
-            val result = geofenceSystem.addGeofence(GeofenceConfig(GeoCoordinate(dLat, dLng), fRad))
+            val requestId = java.util.UUID.randomUUID().toString()
+            val result =
+                    geofenceSystem.addGeofence(
+                            GeofenceConfig(GeoCoordinate(dLat, dLng), fRad, requestId)
+                    )
 
             if (result.isSuccess) {
-                _state.value = _state.value.copy(statusMessage = "Geofence Active.")
+                val entity =
+                        com.antigravity.geofencing.data.GeofenceEntity(
+                                requestId = requestId,
+                                latitude = dLat,
+                                longitude = dLng,
+                                radius = fRad
+                        )
+                com.antigravity.geofencing.data.GeofenceRepository.getDao().insert(entity)
+
+                _state.value = _state.value.copy(statusMessage = "Geofence Added.")
             } else {
                 _state.value =
                         _state.value.copy(

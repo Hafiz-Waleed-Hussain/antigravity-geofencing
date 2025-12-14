@@ -20,30 +20,63 @@
             android:text="MVVM LiveData Flavor (2017)"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:layout_marginBottom="24dp"/>
+            android:layout_marginBottom="8dp"/>
 
-        <EditText
-            android:text="@={viewModel.latitude}"
+        <TextView
+            android:text="@{viewModel.currentLocation}"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#0000FF"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tap Map to Select Location"
+            android:layout_marginBottom="8dp"/>
+
+        <fragment
+            android:id="@+id/map_fragment"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="250dp"/>
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/latitude"
-            android:inputType="numberDecimal|numberSigned"/>
+            android:orientation="horizontal"
+            android:weightSum="2"
+            android:layout_marginTop="8dp">
+
+            <EditText
+                android:id="@+id/et_latitude"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Latitude"
+                android:inputType="numberDecimal|numberSigned"
+                android:text="@={viewModel.latitude}" />
+
+            <EditText
+                android:id="@+id/et_longitude"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Longitude"
+                android:inputType="numberDecimal|numberSigned"
+                android:text="@={viewModel.longitude}" />
+        </LinearLayout>
 
         <EditText
-            android:text="@={viewModel.longitude}"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/longitude"
-            android:inputType="numberDecimal|numberSigned"/>
-
-        <EditText
-            android:text="@={viewModel.radius}"
+            android:id="@+id/et_radius"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/radius"
-            android:inputType="numberDecimal"/>
+            android:inputType="numberDecimal"
+            android:text="@={viewModel.radius}" />
 
         <Button
+            android:id="@+id/btn_set_geofence"
             android:onClick="@{() -> viewModel.onSetGeofenceClicked()}"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -51,6 +84,7 @@
             android:layout_marginTop="16dp"/>
 
         <TextView
+            android:id="@+id/tv_status"
             android:text="@{viewModel.status}"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -82,6 +116,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/snooze"/>
+                android:text="@string/snooze"/>
         </LinearLayout>
+        
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="View History"
+            android:onClick="@{() -> viewModel.onHistoryClicked()}"
+            android:layout_marginTop="24dp"/>
     </LinearLayout>
 </layout>

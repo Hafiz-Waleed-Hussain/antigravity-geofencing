@@ -43,12 +43,34 @@ class GeofenceWorker(context: Context, params: WorkerParameters) :
             notificationManager.createNotificationChannel(channel)
         }
 
+        val openAppIntent =
+                applicationContext.packageManager.getLaunchIntentForPackage(
+                                applicationContext.packageName
+                        )
+                        ?.apply {
+                            flags =
+                                    android.content.Intent.FLAG_ACTIVITY_NEW_TASK or
+                                            android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        }
+
+        val pendingIntent =
+                if (openAppIntent != null) {
+                    android.app.PendingIntent.getActivity(
+                            applicationContext,
+                            0,
+                            openAppIntent,
+                            android.app.PendingIntent.FLAG_UPDATE_CURRENT or
+                                    android.app.PendingIntent.FLAG_IMMUTABLE
+                    )
+                } else null
+
         val notification =
                 NotificationCompat.Builder(applicationContext, channelId)
                         .setContentTitle("Geofence Alarm")
                         .setContentText("You are in the zone!")
                         .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
                         .setOngoing(true)
+                        .setContentIntent(pendingIntent)
                         .build()
 
         return ForegroundInfo(notificationId, notification)
