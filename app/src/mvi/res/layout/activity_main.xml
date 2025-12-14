@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:gravity="center">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="MVI Flavor (RxJava)"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="24dp"/>
+
+    <EditText
+        android:id="@+id/et_latitude"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/latitude"
+        android:inputType="numberDecimal|numberSigned"/>
+
+    <EditText
+        android:id="@+id/et_longitude"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/longitude"
+        android:inputType="numberDecimal|numberSigned"/>
+
+    <EditText
+        android:id="@+id/et_radius"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/radius"
+        android:inputType="numberDecimal"
+        android:text="100"/>
+
+    <Button
+        android:id="@+id/btn_set_geofence"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/set_geofence"
+        android:layout_marginTop="16dp"/>
+
+    <TextView
+        android:id="@+id/tv_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Status: Idle"
+        android:layout_marginTop="16dp"/>
+
+    <LinearLayout
+        android:id="@+id/layout_alarm_controls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:layout_marginTop="32dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/alarm_playing"
+            android:textColor="#FF0000"
+            android:textSize="20sp"
+            android:layout_gravity="center"/>
+
+        <Button
+            android:id="@+id/btn_silence"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/silence"/>
+
+        <Button
+            android:id="@+id/btn_snooze"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/snooze"/>
+    </LinearLayout>
+
+</LinearLayout>

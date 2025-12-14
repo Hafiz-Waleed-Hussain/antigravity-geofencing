@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Antigravity Geofencing</string>
+    <string name="welcome">Welcome to the Evolution of Android</string>
+    <string name="set_geofence">Set Geofence</string>
+    <string name="latitude">Latitude</string>
+    <string name="longitude">Longitude</string>
+    <string name="radius">Radius (m)</string>
+    <string name="start_tracking">Start Tracking</string>
+    <string name="stop_tracking">Stop Tracking</string>
+    <string name="alarm_playing">ALARM! You have entered the zone.</string>
+    <string name="silence">I have completed the task</string>
+    <string name="snooze">Delay 10 min</string>
+</resources>
