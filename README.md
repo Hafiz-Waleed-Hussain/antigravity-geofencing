@@ -1,3 +1,5 @@
+# NOTE: this is created by a Vibe coding on Google Anti Gravity, and I spent 2 hours and 40 minutes.
+
 # 🌍 Antigravity Geofencing - A Multi-Architecture Android Showcase
 
 > **An educational Android app demonstrating 6+ architectural patterns through a practical geofencing application**
